@@ -1,0 +1,8 @@
+= CPS: Captured network Packet Sender
+
+CPS is an open source software written by Ruby, which can send
+captured network packet by tcpdump (also Wireshark).
+
+= Usage
+
+TODO:
