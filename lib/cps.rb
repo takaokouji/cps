@@ -12,7 +12,7 @@ class CPS
 
   # linux/socket.h
   PF_PACKET = AF_PACKET = 17 
-  ETH_P_ALL = [0x3].pack("n").unpack("v").first
+  ETH_P_ALL = 0x03
 
   # linux/if_arp.h
   ARPHRD_ETHER = 1
@@ -68,19 +68,17 @@ class CPS
           first = false
         end
         
-        ethrnet_header = packet.raw_data[0, 14]
-        
         # struct sockaddr_ll
         addr = ""
         addr << [AF_PACKET].pack("n") # unsigned short  sll_family;
-        addr << ethrnet_header[12, 2] # __be16          sll_protocol;
+        addr << [ETH_P_ALL].pack("n") # __be16          sll_protocol;
         addr << @ifindex              # int             sll_ifindex;
         addr << [0].pack("n")         # unsigned short  sll_hatype;
         addr << [0].pack("C")         # unsigned char   sll_pkttype;
-        addr << [6].pack("C")         # unsigned char   sll_halen;
-        addr << ethrnet_header[0, 6] + ([0].pack("C") * 2)   # unsigned char   sll_addr[8];
-
-        send_data_list.push(SendData.new(frame_number, packet.time - start_time, addr, packet.raw_data[14..-1]))
+        addr << [0].pack("C")         # unsigned char   sll_halen;
+        addr << [0].pack("C") * 8     # unsigned char   sll_addr[8];
+        
+        send_data_list.push(SendData.new(frame_number, packet.time - start_time, addr, packet.raw_data))
       end
     end
 
@@ -114,7 +112,7 @@ class CPS
 
   # RAWソケットをオープンする。
   def open_raw_socket
-    socket = Socket.open(PF_PACKET, Socket::SOCK_RAW, ETH_P_ALL)
+    socket = Socket.open(PF_PACKET, Socket::SOCK_RAW, [ETH_P_ALL].pack("n").unpack("v").first)
     begin
       yield socket
     ensure
